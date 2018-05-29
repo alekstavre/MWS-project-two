@@ -1,0 +1,9 @@
+@media screen and (max-width: 460px){
+
+    #restaurants-list p{
+        font-size: 14pt;
+    }
+    #restaurants-list li h1{
+        font-size: 16pt;
+    }
+}
