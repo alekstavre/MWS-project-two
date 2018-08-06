@@ -1,5 +1,6 @@
 var gulp = require('gulp');
 imagemin = require('gulp-imagemin');
+const webp = require('gulp-webp');
 
 gulp.task('default', function(){
     console.log('hello world');
@@ -12,3 +13,8 @@ gulp.task('image', function(){
         .pipe(imagemin())
         .pipe(gulp.dest('minimg'));
 });
+gulp.task('jpg2webp', () =>
+    gulp.src('img/*')
+        .pipe(webp())
+        .pipe(gulp.dest('img'))
+);
