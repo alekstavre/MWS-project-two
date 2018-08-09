@@ -1,46 +1,74 @@
-self.addEventListener( 'install', e => {
-    e.waitUntil(
-        caches.open( 'mws' ).then( cache => {
-            console.log( cache );
-            return cache.addAll( [
-              './',
-              './index.html',
-              './restaurant.html',
-              './css/media.css',
-              './css/styles.css',
-              './data/restaurants.json',
-              './js/dbhelper.js',
-              './js/main.js',
-              './js/restaurant_info.js',
-              './img/1.jpg',
-              './img/2.jpg',
-              './img/3.jpg',
-              './img/4.jpg',
-              './img/5.jpg',
-              './img/6.jpg',
-              './img/7.jpg',
-              './img/8.jpg',
-              './img/9.jpg',
-              './img/10.jpg',
-              './img/undefined.jpg'
-            ] );
-        } )
+const static_cache = "static-cache";
+const image_cache = "image-cache";
+
+self.addEventListener('install',function(event) {
+    event.waitUntil(
+        caches.open(static_cache).then(function(cache){
+            
+            return cache.addAll([  
+             'sw.js',   
+             '/', 
+             'index.html',
+             'css/styles.css',
+             'css/media.css',
+             'js/idb.js',
+             'js/dbhelper.js',
+             'js/main.js',
+             'js/restaurant_info.js'
+            ])
+        })
     )
-} );
+})
 
+function serveImage(request) {
+    return caches.open(image_cache).then(function(cache){
+        return cache.match(request).then(function(response){
+            
+            if (response) return response;
 
-//Code snippet used from blog:
-// https://jakearchibald.com/2014/offline-cookbook/#on-network-response
+            return fetch(request).then(function(net_response){
+                cache.put(request, net_response.clone());
+                return net_response
+            })
+        })
+    })
+}
+
+function serveStatic(request) {
+    return caches.open(static_cache).then(function(cache){
+        return cache.match(request).then(function(response){
+            
+        
+            if (response) return response;
+
+    
+            if (request.url.includes("restaurant.html")) {
+                return fetch(request).then(function(net_response){
+                    cache.put(request, net_response.clone());
+                    return net_response
+                })
+            } else {
+              return fetch(request)
+            }
+
+           
+
+        })
+    })
+}
+
 
 self.addEventListener('fetch', function(event) {
-    event.respondWith(
-        caches.open('mws').then(function(cache) {
-            return cache.match(event.request).then(function (response) {
-                return response || fetch(event.request).then(function(response) {
-                    cache.put(event.request, response.clone());
-                    return response;
-                });
-            });
-        })
-    );
-});
+
+    if (event.request.cache === 'only-if-cached' && event.request.mode !== 'same-origin') {
+        return;
+      }
+
+    if (event.request.url.includes("map")) return;
+
+    if (event.request.url.endsWith(".webp") || event.request.url.endsWith(".jpg")  || event.request.url.endsWith(".svg")) {
+        event.respondWith(serveImage(event.request))
+    } else {
+        event.respondWith(serveStatic(event.request))   
+    }
+})
