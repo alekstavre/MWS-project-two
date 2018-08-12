@@ -1,3 +1,9 @@
+
+var dbPromise = idb.open("restaurant_reviews",1, function(upgradeDB) {
+  upgradeDB.createObjectStore("restaurants", {keyPath:"id"});
+})
+
+
 /**
  * Common database helper functions.
  */
@@ -8,38 +14,100 @@ class DBHelper {
    * Change this to restaurants.json file location on your server.
    */
   static get DATABASE_URL() {
-    const port = 1337; // Change this to your server port
+    const port = 1337 // Change this to your server port
     return `http://localhost:${port}/restaurants`;
   }
 
+ 
   /**
    * Fetch all restaurants.
    */
   static fetchRestaurants(callback) {
-    fetch(DBHelper.DATABASE_URL)
-  .then(response => response.json())
-  .then(restaurants => callback(null, restaurants))
-  .catch(err => callback(err, null));
+
+    //  get rest from IDB
+    dbPromise.then(function(db){
+      var tx = db.transaction("restaurants");
+      var restaurantStore = tx.objectStore("restaurants");
+      return restaurantStore.getAll()
+    }).then(function(restaurants) {
+      
+      if (restaurants.length !== 0) { // if rest. already in IDB - return
+
+        callback(null, restaurants)
+
+      } else { // If rest. not in IDB yet - fetch them from API
+
+          fetch(DBHelper.DATABASE_URL)
+          .then(response => response.json())
+          .then(restaurants => {
+
+            // Once rest. successfully fetched - add them to IDB
+            dbPromise.then(function(db){
+              var tx = db.transaction("restaurants", "readwrite");
+              var restaurantStore = tx.objectStore("restaurants");
+
+              for (let restaurant of restaurants) {
+                restaurantStore.put(restaurant)
+              }
+
+              return tx.complete 
+
+            }).then(function() { //  added rest to IDB
+              
+              console.log("Rest. added to IDB")
+
+            }).catch(function(error) { // failed adding rest. to IDB
+              
+              console.log(error)
+
+            }).finally(function(error) { //whether adding to IDB was success or not , always  return fetched data to caller
+
+              callback(null, restaurants)
+
+            })
+
+            
+          })
+          .catch(error => callback(error, null))
+
+      }
+
+
+    })
+
+    
+
   }
 
   /**
    * Fetch a restaurant by its ID.
    */
   static fetchRestaurantById(id, callback) {
-    // fetch all restaurants with proper error handling.
-    DBHelper.fetchRestaurants((error, restaurants) => {
-      if (error) {
-        callback(error, null);
-      } else {
-        const restaurant = restaurants.find(r => r.id == id);
-        if (restaurant) { // Got the restaurant
-          callback(null, restaurant);
-        } else { // Restaurant does not exist in the database
-          callback('Restaurant does not exist', null);
-        }
+
+    //  get rest. by ID  from IDB
+    dbPromise.then(function(db){
+
+      var tx = db.transaction("restaurants");
+      var restaurantStore = tx.objectStore("restaurants");
+      return restaurantStore.get(parseInt(id))
+
+    }).then(function(restaurant) {
+      
+      if (restaurant) { // rest. in IDB - return
+
+        callback(null, restaurant)
+
+      } else { // rest. not in IDB - call API
+
+        fetch(DBHelper.DATABASE_URL + '/' + id)
+          .then(response => response.json())
+          .then(restaurants => callback(null, restaurants))
+          .catch(error => callback(error, null))
       }
-    });
+
+    })
   }
+
 
   /**
    * Fetch restaurants by a cuisine type with proper error handling.
