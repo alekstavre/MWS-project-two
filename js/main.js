@@ -3,6 +3,17 @@ let restaurants,
   cuisines
 var map
 var markers = []
+//register service worker
+if ( navigator.serviceWorker ) {
+  navigator.serviceWorker.register( '../sw.js' )
+      .then( () => {
+          console.log( `SW registered` )
+      } )
+      .catch( () => {
+          console.log( "Registration failed" );
+      } );
+
+}
 
 /**
  * Fetch neighborhoods and cuisines as soon as the page is loaded.
@@ -176,14 +187,4 @@ addMarkersToMap = (restaurants = self.restaurants) => {
     });
     self.markers.push(marker);
   });
-}
-if ( navigator.serviceWorker ) {
-  navigator.serviceWorker.register( '../sw.js' )
-      .then( () => {
-          console.log( `SW registered` )
-      } )
-      .catch( () => {
-          console.log( "Registration failed" );
-      } );
-
 }
