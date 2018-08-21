@@ -2,12 +2,12 @@
 <html lang="en">
 
 <head>
+  <meta charset="utf-8"/>
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta name="theme-color" content="lightblue">
   <link rel="manifest" href="/manifest.json">
   <link rel="stylesheet" src="//normalize-css.googlecode.com/svn/trunk/normalize.css" />
   <link rel="stylesheet" href="css/styles.css">
-  <link rel="stylesheet" media="screen and (max-width:460px)" href="css/media.css">
   <title>Restaurant Reviews</title>
 </head>
 
@@ -24,7 +24,7 @@
       <div id="map" aria-label="application: Google Map" role="application"></div>
     </section>
     <section id="restaurants">
-      <div class="filter-options">
+      <div class="filter-options" role="searchbox">
         <h2>Filter Results</h2>
         <select id="neighborhoods-select" name="neighborhoods" onchange="updateRestaurants()"aria-label="neighborhoods select">
           <option value="all">All Neighborhoods</option>
